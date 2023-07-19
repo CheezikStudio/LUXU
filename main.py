@@ -11,7 +11,7 @@ def main():
             global perexod
             perexod = " "
             bot = telebot.TeleBot('6361686380:AAHHukhByQQr-1sHj1rIWX_eodfmkkVJM5M')
-            @bot.message_handler(commands=["start", "admin", "answer", "ras", "help"])
+            @bot.message_handler(commands=["start", "admin", "answer", "ras", "help", "course", "give"])
             def start(message, res=False):
                 idtg = str(message.from_user.id)
                 db = sqlite3.connect("luxu.db")
@@ -48,25 +48,25 @@ def main():
 🔆 Для продолжения выбери нужную команду на клавиатуре
 ❓ Если есть дополнительные вопросы по поводу бота, нажмите на кнопку «🛠 Поддержка»
                     ''',  reply_markup=markup, parse_mode='HTML')
-                if "/answer" in message.text and idtg == "1058097307":
+                if "/answer" in message.text and idtg == "1359842271":
                     id = int(message.text.split(" ")[1])
-                    text = int(message.text.split(" ")[2])
+                    text = message.text.split(" ")[2]
                     bot.send_message(id, f'''
 ❗️ Ответ оператора - {text}
-                    ''',  reply_markup=markup, parse_mode='HTML')
+                    ''', parse_mode='HTML')
                     bot.send_message(idtg, f'''
 ❗️ Готово
-                    ''',  reply_markup=markup, parse_mode='HTML')
-                if "/course" in message.text and idtg == "1058097307":
+                    ''', parse_mode='HTML')
+                if "/course" in message.text and idtg == "1359842271":
                     c.execute("""SELECT course FROM admin""")
                     course = c.fetchone()[0]
                     new = int(message.text.split(" ")[1])
-                    c.execute("UPDATE admin SET  = ?",(new,))
+                    c.execute("UPDATE admin SET course = ?",(new,))
                     db.commit()
                     bot.send_message(idtg, f'''
 ❗️ Готово
-                    ''',  reply_markup=markup, parse_mode='HTML')
-                if "/ras" in message.text and idtg == "1058097307":
+                    ''', parse_mode='HTML')
+                if "/ras" in message.text and idtg == "1359842271":
                     text = message.text.split(" ")[1]
                     c.execute("""SELECT idtg FROM users""")
                     id = c.fetchall()
@@ -77,6 +77,21 @@ def main():
                     bot.send_message(idtg, f'''
 ❗️ Готово
                     ''',  parse_mode='HTML')
+                if "/give" in message.text and idtg == "1359842271":
+                    id = message.text.split(" ")[1]
+                    count = int(message.text.split(" ")[2])
+                    c.execute("""SELECT balanse FROM users WHERE idtg = ?""", [id])
+                    balanse = c.fetchone()[0]
+                    c.execute("""SELECT output FROM users WHERE idtg = ?""", [id])
+                    output = c.fetchone()[0]
+                    c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(balanse + count, id))
+                    db.commit()
+                    bot.send_message(idtg, f'''
+❗️ Готово
+                    ''',  parse_mode='HTML')
+                    bot.send_message(id, f'''
+💡На ваш баланс начислилось {count} G
+                    ''', parse_mode='HTML')
             @bot.message_handler(content_types=['text'])
             def menu(message):
                 db = sqlite3.connect("luxu.db")
@@ -92,7 +107,7 @@ def main():
                     markup.add(btn1, btn2)
                     bot.send_message(idtg, f'''
 🆔: {idtg}
-💵 Баланс: {data[1]}
+💵 Баланс: {data[1]}G
 
 💵 Всего пополнено: на {data[4]} ₽
 🍯 Всего выведено: {data[3]}G
@@ -111,7 +126,7 @@ def main():
                     data = c.fetchone()
                     c.execute("""SELECT course FROM admin""")
                     course = c.fetchone()[0]
-                    if data[1] <= course:
+                    if data[1] < 100:
                         markup = types.InlineKeyboardMarkup(row_width = 1)
                         btn1 = types.InlineKeyboardButton(text="Пополнить баланс", callback_data=f"replenish")
                         markup.add(btn1)
@@ -212,7 +227,7 @@ def main():
                         c  = db.cursor()
                         c.execute("""SELECT course FROM admin""")
                         course = c.fetchone()[0]
-                        if int(message.text) <= course:
+                        if int(message.text) < course:
                             markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
                             btn1 = types.KeyboardButton(text="Главное меню")
                             markup.add(btn1)
@@ -308,7 +323,7 @@ TEC-9 "Tie Dye" за <code>{round(summa * 0.25 + summa)}.{i}</code>, нажми�
                         markup.add(btn1,btn2)
                         file_info = bot.get_file(message.photo[len(message.photo)-1].file_id)
                         downloaded_file = bot.download_file(file_info.file_path)
-                        bot.send_photo(1058097307, downloaded_file, f'''
+                        bot.send_photo(1359842271, downloaded_file, f'''
 Новая заявка на вывод!
 Количество - {summa}
 Сумма - {prise}
@@ -407,7 +422,7 @@ id - {idtg}
                     bot.send_message(idtg, f'''
 Ожидайте, вам ответят в ближайшее время!
                     ''', parse_mode='HTML')
-                    bot.send_message(1058097307, f'''
+                    bot.send_message(1359842271, f'''
 Вопрос от {idtg} 
 
 {message.text}
@@ -462,7 +477,7 @@ id - {idtg}
                     bot.answer_callback_query(callback_query_id=call.id, text=f'''
             Топ недели:
                     ''', show_alert=True) 
-                elif call.data == "top2":
+                elif call.data == "top3":
                     bot.answer_callback_query(callback_query_id=call.id, text=f'''
             Топ месяца:
                     ''', show_alert=True) 
@@ -470,12 +485,16 @@ id - {idtg}
                     c.execute("""SELECT course FROM admin""")
                     course = c.fetchone()[0]
                     bot.answer_callback_query(callback_query_id=call.id, text=f'''
-            Курс: 100G = {course}
+            Курс: 100G = {course} Р
                     ''', show_alert=True) 
                 elif "+" in call.data:
                     bot.delete_message(idtg, call.message.message_id)
                     id = int(call.data.split(" ")[1])
                     summa = int(call.data.split(" ")[2])
+                    c.execute("""SELECT course FROM admin""")
+                    course = c.fetchone()[0] / 100
+                    summa1 = round(summa / course)
+                    print(summa1)
                     c.execute("""SELECT balanse FROM users WHERE idtg = ?""", [id])
                     balanse = c.fetchone()[0]
                     c.execute("""SELECT ref FROM users WHERE idtg = ?""", [id])
@@ -483,17 +502,17 @@ id - {idtg}
                     if ref != None:
                         c.execute("""SELECT balanse FROM users WHERE idtg = ?""", [ref])
                         balanseref = c.fetchone()[0]
-                        c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(balanseref+summa*0.05, ref))
+                        c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(balanseref+summa1*0.05, ref))
                         bot.send_message(ref, f'''
-💡На ваш баланс начислилось {summa*0.05}₽ за реферала!
+💡На ваш баланс начислилось {summa1*0.05}G за реферала!
                         ''', parse_mode='HTML')
                     c.execute("""SELECT given FROM users WHERE idtg = ?""", [id])
                     given = c.fetchone()[0]
-                    c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(summa+balanse, id))
+                    c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(summa1+balanse, id))
                     c.execute(f"UPDATE users SET given = ? WHERE idtg = ?",(summa+given, id))
                     db.commit()
                     bot.send_message(id, f'''
-💡На ваш баланс начислилось {summa} ₽
+💡На ваш баланс начислилось {summa1} G
                     ''', parse_mode='HTML')
                 elif "-" in call.data:
                     bot.delete_message(idtg, call.message.message_id)
@@ -531,7 +550,7 @@ id - {idtg}
                     balanse = c.fetchone()[0]
                     c.execute("""SELECT output FROM users WHERE idtg = ?""", [id])
                     output = c.fetchone()[0]
-                    c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(balanse - prise, id))
+                    c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(balanse - summa, id))
                     c.execute(f"UPDATE users SET output = ? WHERE idtg = ?",(summa+output, id))
                     db.commit()
                 elif "del" in call.data:
@@ -557,7 +576,7 @@ id - {idtg}
                         markup.add(btn1,btn2,btn3)
                         file_info = bot.get_file(message.photo[len(message.photo)-1].file_id)
                         downloaded_file = bot.download_file(file_info.file_path)
-                        bot.send_photo(1058097307, downloaded_file, f'''
+                        bot.send_photo(1359842271, downloaded_file, f'''
 Новая заявка на пополнение!
 Сумма - {summa}
 id - {idtg}
