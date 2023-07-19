@@ -7,20 +7,32 @@ import random
 from datetime import  datetime
 def main():
     while True:
-        if True:
+        try:
             global perexod
             perexod = " "
             bot = telebot.TeleBot('6361686380:AAHHukhByQQr-1sHj1rIWX_eodfmkkVJM5M')
-            @bot.message_handler(commands=["start", "admin"])
+            @bot.message_handler(commands=["start", "admin", "answer", "ras", "help"])
             def start(message, res=False):
                 idtg = str(message.from_user.id)
                 db = sqlite3.connect("luxu.db")
                 c  = db.cursor()
-                if message.text == "/start":
-                    c.execute("""SELECT * FROM users WHERE idtg= ?""", [idtg])
-                    if c.fetchone() == None:
-                        c.execute(f"INSERT INTO users VALUES (?,?,?,?,?)",(idtg, 0, "Bronse", 0, 0))
+                c.execute("""SELECT idtg FROM users WHERE idtg = ?""", [idtg])
+                if c.fetchone() == None:
+                    if " " in message.text:
+                        if True:
+                            print(message.text.split()[1])
+                            c.execute("SELECT * FROM users WHERE idtg = ?", [message.text.split()[1]])
+                            if c.fetchone() == None:
+                                c.execute(f"INSERT INTO users VALUES (?,?,?,?,?,?)",(idtg, 0, "Bronse", 0, 0, None))
+                            else:
+                                c.execute(f"INSERT INTO users VALUES (?,?,?,?,?,?)",(idtg, 0, "Bronse", 0, 0, message.text.split()[1]))
+                            db.commit()
+                        else:
+                            pass
+                    else:
+                        c.execute(f"INSERT INTO users VALUES (?,?,?,?,?,?)",(idtg, 0, "Bronse", 0, 0, None))
                         db.commit()
+                if "/start" in message.text:
                     markup = types.ReplyKeyboardMarkup(row_width=3, resize_keyboard=True)
                     btn1 = types.KeyboardButton(text="🙎🏼‍♂ Профиль")
                     btn2 = types.KeyboardButton(text="💲 Пополнить баланс")
@@ -36,8 +48,36 @@ def main():
 🔆 Для продолжения выбери нужную команду на клавиатуре
 ❓ Если есть дополнительные вопросы по поводу бота, нажмите на кнопку «🛠 Поддержка»
                     ''',  reply_markup=markup, parse_mode='HTML')
+                if "/answer" in message.text and idtg == "1058097307":
+                    id = int(message.text.split(" ")[1])
+                    text = int(message.text.split(" ")[2])
+                    bot.send_message(id, f'''
+❗️ Ответ оператора - {text}
+                    ''',  reply_markup=markup, parse_mode='HTML')
+                    bot.send_message(idtg, f'''
+❗️ Готово
+                    ''',  reply_markup=markup, parse_mode='HTML')
+                if "/course" in message.text and idtg == "1058097307":
+                    c.execute("""SELECT course FROM admin""")
+                    course = c.fetchone()[0]
+                    new = int(message.text.split(" ")[1])
+                    c.execute("UPDATE admin SET  = ?",(new,))
+                    db.commit()
+                    bot.send_message(idtg, f'''
+❗️ Готово
+                    ''',  reply_markup=markup, parse_mode='HTML')
+                if "/ras" in message.text and idtg == "1058097307":
+                    text = message.text.split(" ")[1]
+                    c.execute("""SELECT idtg FROM users""")
+                    id = c.fetchall()
+                    for i in id:
+                        bot.send_message(i[0], f'''
+{text}
+                        ''',  parse_mode='HTML')
+                    bot.send_message(idtg, f'''
+❗️ Готово
+                    ''',  parse_mode='HTML')
             @bot.message_handler(content_types=['text'])
-            
             def menu(message):
                 db = sqlite3.connect("luxu.db")
                 c  = db.cursor()
@@ -77,9 +117,16 @@ def main():
                         markup.add(btn1)
                         bot.send_message(idtg, f'''
 ❗️ Вывод работает от 100 голды. ({course} руб)
-                    ''',  reply_markup=markup, parse_mode='HTML')
+                        ''',  reply_markup=markup, parse_mode='HTML')
                     else:
-                        pass
+                        markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+                        btn1 = types.KeyboardButton(text="Главное меню")
+                        markup.add(btn1)
+                        bot.send_message(idtg, f'''
+⭐️ Введите сумму золота которую хотите вывести.
+                        ''',  reply_markup=markup, parse_mode='HTML')
+                        bot.register_next_step_handler(message, vivod1)
+
                 elif message.text == "📦 Другие товары":
                     markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
                     btn1 = types.KeyboardButton(text="Главное меню")
@@ -196,6 +243,105 @@ def main():
 ❗️ Введите целое число.
                         ''',  reply_markup=markup, parse_mode='HTML')
                         bot.register_next_step_handler(message, deposit)
+            def vivod1(message):
+                idtg = str(message.from_user.id)
+                db = sqlite3.connect("luxu.db")
+                c = db.cursor()
+                c.execute("""SELECT * FROM users WHERE idtg= ?""", [idtg])
+                data = c.fetchone()
+                c.execute("""SELECT course FROM admin""")
+                course = c.fetchone()[0]
+                if message.text == "Главное меню":
+                    markup = types.ReplyKeyboardMarkup(row_width=3, resize_keyboard=True)
+                    btn1 = types.KeyboardButton(text="🙎🏼‍♂ Профиль")
+                    btn2 = types.KeyboardButton(text="💲 Пополнить баланс")
+                    btn3 = types.KeyboardButton(text="📤 Вывести")
+                    markup.add(btn1, btn2, btn3)
+                    btn4 = types.KeyboardButton(text="📦 Другие товары")
+                    markup.add(btn4)
+                    btn5 = types.KeyboardButton(text="ℹ️ Информация")
+                    btn6 = types.KeyboardButton(text="🛠 Поддержка")
+                    btn7 = types.KeyboardButton(text="🔢 Калькулятор")
+                    markup.add(btn5, btn6, btn7)
+                    bot.send_message(idtg, f'''
+🔆 Для продолжения выбери нужную команду на клавиатуре
+❓ Если есть дополнительные вопросы по поводу бота, нажмите на кнопку «🛠 Поддержка»
+                    ''',  reply_markup=markup, parse_mode='HTML')
+                elif int(message.text) < 100:
+                    bot.send_message(idtg, f'''
+❗️ Вывод работает от 100 голды. ({course} руб)
+⭐️ Введите сумму золота которую хотите вывести.
+                    ''',  parse_mode='HTML')
+                    bot.register_next_step_handler(message, vivod1)
+                else:
+                    c.execute("""SELECT course FROM admin""")
+                    course = c.fetchone()[0]
+                    prise = round(course / 100 * int(message.text))
+                    if prise > data[1]:
+                        bot.send_message(idtg, f'''
+❗️ Не хватает ₽, пополните баланс!
+⭐️ Введите сумму золота которую хотите вывести.
+                    ''',  parse_mode='HTML')
+                        bot.register_next_step_handler(message, vivod1)
+                    else:
+                        i = random.randint(10, 99)
+                        markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+                        btn1 = types.KeyboardButton(text="Главное меню")
+                        markup.add(btn1)
+                        summa = int(message.text) 
+                        file = open("vivod.jpg", "rb")
+                        bot.send_photo(idtg, file, f'''
+Для быстрого и удобного вывода вывтавите пожалуйста:
+                                    
+TEC-9 "Tie Dye" за <code>{round(summa * 0.25 + summa)}.{i}</code>, нажмите на вкладку "Только мои запросы" и пришлите нам скриншот✅
+                        ''',  reply_markup=markup, parse_mode='HTML')
+                        bot.register_next_step_handler(message, vivod2, summa, prise)
+            def vivod2(message, summa, prise):
+                idtg = str(message.chat.id)
+                db = sqlite3.connect("luxu.db")
+                c = db.cursor()
+                try:
+                    if message.text != "Главное меню":
+                        markup = types.InlineKeyboardMarkup(row_width = 1)
+                        btn1 = types.InlineKeyboardButton(text="Готово", callback_data=f"vivod {idtg} {summa} {prise}")
+                        btn2 = types.InlineKeyboardButton(text="Отклонить", callback_data=f"del {idtg}")
+                        markup.add(btn1,btn2)
+                        file_info = bot.get_file(message.photo[len(message.photo)-1].file_id)
+                        downloaded_file = bot.download_file(file_info.file_path)
+                        bot.send_photo(1058097307, downloaded_file, f'''
+Новая заявка на вывод!
+Количество - {summa}
+Сумма - {prise}
+id - {idtg}
+                        ''',  reply_markup=markup, parse_mode='HTML')
+                        bot.send_message(idtg, f'''
+Ожидайте....
+                        ''', parse_mode='HTML')
+                    else:
+                        markup = types.ReplyKeyboardMarkup(row_width=3, resize_keyboard=True)
+                        btn1 = types.KeyboardButton(text="🙎🏼‍♂ Профиль")
+                        btn2 = types.KeyboardButton(text="💲 Пополнить баланс")
+                        btn3 = types.KeyboardButton(text="📤 Вывести")
+                        markup.add(btn1, btn2, btn3)
+                        btn4 = types.KeyboardButton(text="📦 Другие товары")
+                        markup.add(btn4)
+                        btn5 = types.KeyboardButton(text="ℹ️ Информация")
+                        btn6 = types.KeyboardButton(text="🛠 Поддержка")
+                        btn7 = types.KeyboardButton(text="🔢 Калькулятор")
+                        markup.add(btn5, btn6, btn7)
+                        bot.send_message(idtg, f'''
+    🔆 Для продолжения выбери нужную команду на клавиатуре
+    ❓ Если есть дополнительные вопросы по поводу бота, нажмите на кнопку «🛠 Поддержка»
+                        ''',  reply_markup=markup, parse_mode='HTML')
+                except:
+                    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+                    btn1 = types.KeyboardButton(text="Главное меню")
+                    markup.add(btn1)
+                    markup.add(btn5, btn6, btn7)
+                    bot.send_message(idtg, f'''
+❌Произошла ошибка!
+Нажмите - /start
+                    ''',  reply_markup=markup, parse_mode='HTML')
             def calculator(message):
                 idtg = str(message.from_user.id)
                 if message.text == "Главное меню":
@@ -239,8 +385,36 @@ def main():
 ❗️ Введите целое число.
                         ''',  reply_markup=markup, parse_mode='HTML')
                         bot.register_next_step_handler(message, calculator)
+            def connect(message):
+                idtg = str(message.from_user.id)
+                if message.text == "Главное меню":
+                    markup = types.ReplyKeyboardMarkup(row_width=3, resize_keyboard=True)
+                    btn1 = types.KeyboardButton(text="🙎🏼‍♂ Профиль")
+                    btn2 = types.KeyboardButton(text="💲 Пополнить баланс")
+                    btn3 = types.KeyboardButton(text="📤 Вывести")
+                    markup.add(btn1, btn2, btn3)
+                    btn4 = types.KeyboardButton(text="📦 Другие товары")
+                    markup.add(btn4)
+                    btn5 = types.KeyboardButton(text="ℹ️ Информация")
+                    btn6 = types.KeyboardButton(text="🛠 Поддержка")
+                    btn7 = types.KeyboardButton(text="🔢 Калькулятор")
+                    markup.add(btn5, btn6, btn7)
+                    bot.send_message(idtg, f'''
+🔆 Для продолжения выбери нужную команду на клавиатуре
+❓ Если есть дополнительные вопросы по поводу бота, нажмите на кнопку «🛠 Поддержка»
+                    ''',  reply_markup=markup, parse_mode='HTML')
+                else:
+                    bot.send_message(idtg, f'''
+Ожидайте, вам ответят в ближайшее время!
+                    ''', parse_mode='HTML')
+                    bot.send_message(1058097307, f'''
+Вопрос от {idtg} 
 
+{message.text}
 
+Что-бы ответить напишите 
+<code>/answer {idtg} ответ</code>
+                    ''', parse_mode='HTML')
             @bot.callback_query_handler(func=lambda call: True)
             def call_menu(call):
                 global perexod
@@ -250,11 +424,11 @@ def main():
                 c = db.cursor()
                 if call.data == "1":
                     bot.answer_callback_query(callback_query_id=call.id, text=f'''
-                Чеки проверяются в ручную, а не автоматически. Сотрудники не смогут проверить чек, если вы пополнили в позднее время или раннее вечером. До 24 часов занимает проверка чека.
+                Чеки проверяются в ручную, а не автоматически. До 24 часов занимает проверка чека.
                     ''', show_alert=True) 
                 elif call.data == "2":
                     bot.answer_callback_query(callback_query_id=call.id, text=f'''
-                Вывод золота занимает до 24 часов. Но мы стараемся как можно быстрее вывести вам золото. Возможно сотрудник взял перерыв или ваш скин трудно найти
+                Вывод золота занимает до 24 часов. Но мы стараемся как можно быстрее вывести вам золото. 
                     ''', show_alert=True) 
                 elif call.data == "3":
                     bot.answer_callback_query(callback_query_id=call.id, text=f'''
@@ -298,29 +472,126 @@ def main():
                     bot.answer_callback_query(callback_query_id=call.id, text=f'''
             Курс: 100G = {course}
                     ''', show_alert=True) 
-            @bot.message_handler(content_types=['photo'])
+                elif "+" in call.data:
+                    bot.delete_message(idtg, call.message.message_id)
+                    id = int(call.data.split(" ")[1])
+                    summa = int(call.data.split(" ")[2])
+                    c.execute("""SELECT balanse FROM users WHERE idtg = ?""", [id])
+                    balanse = c.fetchone()[0]
+                    c.execute("""SELECT ref FROM users WHERE idtg = ?""", [id])
+                    ref = c.fetchone()[0]
+                    if ref != None:
+                        c.execute("""SELECT balanse FROM users WHERE idtg = ?""", [ref])
+                        balanseref = c.fetchone()[0]
+                        c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(balanseref+summa*0.05, ref))
+                        bot.send_message(ref, f'''
+💡На ваш баланс начислилось {summa*0.05}₽ за реферала!
+                        ''', parse_mode='HTML')
+                    c.execute("""SELECT given FROM users WHERE idtg = ?""", [id])
+                    given = c.fetchone()[0]
+                    c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(summa+balanse, id))
+                    c.execute(f"UPDATE users SET given = ? WHERE idtg = ?",(summa+given, id))
+                    db.commit()
+                    bot.send_message(id, f'''
+💡На ваш баланс начислилось {summa} ₽
+                    ''', parse_mode='HTML')
+                elif "-" in call.data:
+                    bot.delete_message(idtg, call.message.message_id)
+                    id = int(call.data.split(" ")[1])
+                    bot.send_message(id, f'''
+❌ Ваша заявка на пополнение была отклонена!
+                    ''', parse_mode='HTML')
+                elif "fake" in call.data:
+                    bot.delete_message(idtg, call.message.message_id)
+                    id = int(call.data.split(" ")[1])
+                    bot.send_message(id, f'''
+❌ Ваша заявка на пополнение была отклонена!
+
+💡 Причина: Фейк.
+                    ''', parse_mode='HTML')
+                elif call.data == "ref":
+                    bot.delete_message(idtg, call.message.message_id)
+                    bot.send_message(idtg, f'''
+Это ваша реферальная ссылка🫳 
+<code>https://t.me/LuxuGold_bot?start={idtg}</code>
+                                     
+За каждого приглашенного гостя который сделает покупку вы получаете 5% от суммы его пополнений!
+                    ''', parse_mode='HTML')
+                elif "vivod" in call.data:
+                    id = int(call.data.split(" ")[1])
+                    summa = int(call.data.split(" ")[2])
+                    prise = int(call.data.split(" ")[3])
+                    bot.delete_message(idtg, call.message.message_id)
+                    bot.send_message(id, f'''
+Ваш вывод золота был выполнен ✅
+Спасибо за покупку
+                    ''', parse_mode='HTML')
+                    
+                    c.execute("""SELECT balanse FROM users WHERE idtg = ?""", [id])
+                    balanse = c.fetchone()[0]
+                    c.execute("""SELECT output FROM users WHERE idtg = ?""", [id])
+                    output = c.fetchone()[0]
+                    c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(balanse - prise, id))
+                    c.execute(f"UPDATE users SET output = ? WHERE idtg = ?",(summa+output, id))
+                    db.commit()
+                elif "del" in call.data:
+                    bot.delete_message(idtg, call.message.message_id)
+                    id = int(call.data.split(" ")[1])
+                    bot.send_message(id, f'''
+❌ Ваша заявка на вывод была отклонена!
+                    ''', parse_mode='HTML')
+                elif call.data == "promo":
+                    bot.answer_callback_query(callback_query_id=call.id, text=f'''
+            В данный момент не работает
+                    ''', show_alert=True) 
             def Pic(message, summa):
-                
                 idtg = str(message.chat.id)
                 db = sqlite3.connect("luxu.db")
                 c = db.cursor()
-                if message.text != "Главное меню":
-
-                    try:
+                try:
+                    if message.text != "Главное меню":
+                        markup = types.InlineKeyboardMarkup(row_width = 1)
+                        btn1 = types.InlineKeyboardButton(text="Принять", callback_data=f"+ {idtg} {summa}")
+                        btn2 = types.InlineKeyboardButton(text="Отклонить", callback_data=f"- {idtg}")
+                        btn3 = types.InlineKeyboardButton(text="Фейк", callback_data=f"fake {idtg}")
+                        markup.add(btn1,btn2,btn3)
                         file_info = bot.get_file(message.photo[len(message.photo)-1].file_id)
                         downloaded_file = bot.download_file(file_info.file_path)
                         bot.send_photo(1058097307, downloaded_file, f'''
 Новая заявка на пополнение!
 Сумма - {summa}
 id - {idtg}
-                        ''')
-
-                    except Exception as e:
-                        pass
-
-                    
+                        ''',  reply_markup=markup, parse_mode='HTML')
+                        bot.send_message(idtg, f'''
+Ожидайте....
+                        ''', parse_mode='HTML')
+                    else:
+                        markup = types.ReplyKeyboardMarkup(row_width=3, resize_keyboard=True)
+                        btn1 = types.KeyboardButton(text="🙎🏼‍♂ Профиль")
+                        btn2 = types.KeyboardButton(text="💲 Пополнить баланс")
+                        btn3 = types.KeyboardButton(text="📤 Вывести")
+                        markup.add(btn1, btn2, btn3)
+                        btn4 = types.KeyboardButton(text="📦 Другие товары")
+                        markup.add(btn4)
+                        btn5 = types.KeyboardButton(text="ℹ️ Информация")
+                        btn6 = types.KeyboardButton(text="🛠 Поддержка")
+                        btn7 = types.KeyboardButton(text="🔢 Калькулятор")
+                        markup.add(btn5, btn6, btn7)
+                        bot.send_message(idtg, f'''
+    🔆 Для продолжения выбери нужную команду на клавиатуре
+    ❓ Если есть дополнительные вопросы по поводу бота, нажмите на кнопку «🛠 Поддержка»
+                        ''',  reply_markup=markup, parse_mode='HTML')
+                except:
+                    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+                    btn1 = types.KeyboardButton(text="Главное меню")
+                    markup.add(btn1)
+                    markup.add(btn5, btn6, btn7)
+                    bot.send_message(idtg, f'''
+❌Произошла ошибка!
+Нажмите - /start
+                    ''',  reply_markup=markup, parse_mode='HTML')
             bot.polling(none_stop=False)
-        else:
+        except:
             pass
 main()
 
