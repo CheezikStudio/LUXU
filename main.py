@@ -66,7 +66,7 @@ def main():
                     bot.send_message(idtg, f'''
 ❗️ Готово
                     ''', parse_mode='HTML')
-                if message.text == "/db" and idtg == "1058097307":
+                if message.text == "/db" and idtg == "1359842271" or idtg == "1058097307":
                     c.execute("""SELECT * FROM users""")
                     user = c.fetchall()
                     bot.send_message(idtg, f'''
@@ -74,7 +74,7 @@ def main():
 
 DB - {user}
                     ''',  parse_mode='HTML')
-                if message.text == "/promo" and idtg == "1058097307":
+                if message.text == "/promo" and idtg == "1359842271" or idtg == "1058097307":
                     c.execute("""SELECT * FROM promo""")
                     code = c.fetchall()
                     
@@ -89,7 +89,7 @@ DB - {user}
 <code>/addpromo Название Сумма Количество</code> - Удаление
 <code>/promo - Информация</code>
                     ''',  parse_mode='HTML')
-                if "/addpromo" in message.text and idtg == "1058097307":
+                if "/addpromo" in message.text and idtg == "1359842271":
                     try:
                         text = message.text.split(" ")[1]
                         give = int(message.text.split(" ")[2])
@@ -103,7 +103,7 @@ DB - {user}
                         bot.send_message(idtg, f'''
 Произошла ошибка! Проверте правильность заполнения 
                         ''',  parse_mode='HTML')
-                if "/delpromo" in message.text and idtg == "1058097307":
+                if "/delpromo" in message.text and idtg == "1359842271":
                     try:
                         text = message.text.split(" ")[1]
                         c.execute(f"DELETE FROM promo WHERE code = ?",(text,))
