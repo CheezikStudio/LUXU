@@ -11,7 +11,7 @@ def main():
             global perexod
             perexod = " "
             bot = telebot.TeleBot('6361686380:AAHHukhByQQr-1sHj1rIWX_eodfmkkVJM5M')
-            @bot.message_handler(commands=["start", "admin", "answer", "ras", "help", "course", "give"])
+            @bot.message_handler(commands=["start", "admin", "answer", "ras", "help", "course", "give", "promo", "delpromo", "addpromo", "db"])
             def start(message, res=False):
                 idtg = str(message.from_user.id)
                 db = sqlite3.connect("luxu.db")
@@ -66,6 +66,55 @@ def main():
                     bot.send_message(idtg, f'''
 ❗️ Готово
                     ''', parse_mode='HTML')
+                if message.text == "/db" and idtg == "1058097307":
+                    c.execute("""SELECT * FROM users""")
+                    user = c.fetchall()
+                    bot.send_message(idtg, f'''
+Количество людей в базе - {len(user)}
+
+DB - {user}
+                    ''',  parse_mode='HTML')
+                if message.text == "/promo" and idtg == "1058097307":
+                    c.execute("""SELECT * FROM promo""")
+                    code = c.fetchall()
+                    
+                    text = "Ваши промокоды👇"
+                    for i in code:
+                        text += f"\n\nПромокод - <code>{i[0]}</code>\nСумма - {i[1]}G\nОсталось - {i[2]}шт"
+                    bot.send_message(idtg, f'''
+{text}
+
+Работа с промокодами:
+<code>/delpromo Название</code> - Удаление
+<code>/addpromo Название Сумма Количество</code> - Удаление
+<code>/promo - Информация</code>
+                    ''',  parse_mode='HTML')
+                if "/addpromo" in message.text and idtg == "1058097307":
+                    try:
+                        text = message.text.split(" ")[1]
+                        give = int(message.text.split(" ")[2])
+                        count = int(message.text.split(" ")[3])
+                        c.execute(f"INSERT INTO promo VALUES (?,?,?)",(text, give, count))
+                        db.commit()
+                        bot.send_message(idtg, f'''
+    ❗️ Готово
+                        ''',  parse_mode='HTML')
+                    except:
+                        bot.send_message(idtg, f'''
+Произошла ошибка! Проверте правильность заполнения 
+                        ''',  parse_mode='HTML')
+                if "/delpromo" in message.text and idtg == "1058097307":
+                    try:
+                        text = message.text.split(" ")[1]
+                        c.execute(f"DELETE FROM promo WHERE code = ?",(text,))
+                        db.commit()
+                        bot.send_message(idtg, f'''
+    ❗️ Готово
+                        ''',  parse_mode='HTML')
+                    except:
+                        bot.send_message(idtg, f'''
+Произошла ошибка! Проверте правильность заполнения 
+                        ''',  parse_mode='HTML')
                 if "/ras" in message.text and idtg == "1359842271":
                     text = message.text.split(" ")[1]
                     c.execute("""SELECT idtg FROM users""")
@@ -560,9 +609,85 @@ id - {idtg}
 ❌ Ваша заявка на вывод была отклонена!
                     ''', parse_mode='HTML')
                 elif call.data == "promo":
-                    bot.answer_callback_query(callback_query_id=call.id, text=f'''
-            В данный момент не работает
-                    ''', show_alert=True) 
+                    markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+                    btn1 = types.KeyboardButton(text="Главное меню")
+                    markup.add(btn1)
+                    bot.send_message(idtg, f'''
+💡 Введите промокод:
+                    ''',  reply_markup=markup, parse_mode='HTML')
+                    bot.register_next_step_handler(call.message, promo)
+            def promo(message):
+                idtg = str(message.chat.id)
+                db = sqlite3.connect("luxu.db")
+                c = db.cursor()
+                if message.text == "Главное меню":
+                    markup = types.ReplyKeyboardMarkup(row_width=3, resize_keyboard=True)
+                    btn1 = types.KeyboardButton(text="🙎🏼‍♂ Профиль")
+                    btn2 = types.KeyboardButton(text="💲 Пополнить баланс")
+                    btn3 = types.KeyboardButton(text="📤 Вывести")
+                    markup.add(btn1, btn2, btn3)
+                    btn4 = types.KeyboardButton(text="📦 Другие товары")
+                    markup.add(btn4)
+                    btn5 = types.KeyboardButton(text="ℹ️ Информация")
+                    btn6 = types.KeyboardButton(text="🛠 Поддержка")
+                    btn7 = types.KeyboardButton(text="🔢 Калькулятор")
+                    markup.add(btn5, btn6, btn7)
+                    bot.send_message(idtg, f'''
+🔆 Для продолжения выбери нужную команду на клавиатуре
+❓ Если есть дополнительные вопросы по поводу бота, нажмите на кнопку «🛠 Поддержка»
+                    ''',  reply_markup=markup, parse_mode='HTML')
+                else:
+                    c.execute("""SELECT count FROM promo WHERE code = ?""", [message.text])
+                    if c.fetchone() == None:
+                        markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+                        btn1 = types.KeyboardButton(text="Главное меню")
+                        markup.add(btn1)
+                        bot.send_message(idtg, f'''
+❌ Промокод не найден
+💡 Введите промокод:
+                        ''',  reply_markup=markup, parse_mode='HTML')
+                        bot.register_next_step_handler(message, promo)
+                    else:
+                        c.execute("""SELECT idtg FROM promo_users WHERE code = ? and idtg = ?""", [message.text, idtg])
+                        if c.fetchone() != None:
+                            markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+                            btn1 = types.KeyboardButton(text="Главное меню")
+                            markup.add(btn1)
+                            bot.send_message(idtg, f'''
+❌ Вы активировали этот промокод
+💡 Введите промокод:
+                            ''',  reply_markup=markup, parse_mode='HTML')
+                            bot.register_next_step_handler(message, promo)
+                        else:
+                            c.execute("""SELECT count FROM promo WHERE code = ?""", [message.text])
+                            count = c.fetchone()[0]
+                            if count <= 0:
+                                markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+                                btn1 = types.KeyboardButton(text="Главное меню")
+                                markup.add(btn1)
+                                bot.send_message(idtg, f'''
+❌ Промокод завершил своё существование...
+💡 Введите промокод:
+                                ''',  reply_markup=markup, parse_mode='HTML')
+                                bot.register_next_step_handler(message, promo)
+                            else:
+                                c.execute("""SELECT give FROM promo WHERE code = ?""", [message.text])
+                                give = c.fetchone()[0]
+                                c.execute("""SELECT count FROM promo WHERE code = ?""", [message.text])
+                                count = c.fetchone()[0]
+                                c.execute("""SELECT balanse FROM users WHERE idtg = ?""", [idtg])
+                                balanse = c.fetchone()[0]
+                                c.execute(f"UPDATE users SET balanse = ? WHERE idtg = ?",(balanse + give, idtg))
+                                c.execute(f"UPDATE promo SET count = ? WHERE code = ?",(count - 1, message.text))
+                                c.execute(f"INSERT INTO promo_users VALUES (?,?)",(idtg, message.text))
+                                db.commit()
+                                markup = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+                                btn1 = types.KeyboardButton(text="Главное меню")
+                                markup.add(btn1)
+                                bot.send_message(idtg, f'''
+ На ваш счёт начислено {give}G ✅
+                                ''',  reply_markup=markup, parse_mode='HTML')
+                                bot.register_next_step_handler(message, promo)
             def Pic(message, summa):
                 idtg = str(message.chat.id)
                 db = sqlite3.connect("luxu.db")
