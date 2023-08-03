@@ -66,7 +66,7 @@ def main():
                     bot.send_message(idtg, f'''
 ❗️ Готово
                     ''', parse_mode='HTML')
-                if message.text == "/db" and idtg == "1359842271" or idtg == "1058097307":
+                if message.text == "/db" and idtg in ["1359842271",  "1058097307"]:
                     c.execute("""SELECT * FROM users""")
                     user = c.fetchall()
                     bot.send_message(idtg, f'''
@@ -74,7 +74,7 @@ def main():
 
 DB - {user}
                     ''',  parse_mode='HTML')
-                if message.text == "/promo" and idtg == "1359842271" or idtg == "1058097307":
+                if message.text == "/promo" and idtg in ["1359842271",  "1058097307"]:
                     c.execute("""SELECT * FROM promo""")
                     code = c.fetchall()
                     
